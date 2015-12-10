@@ -27,24 +27,57 @@ var app = {
     // 'load', 'deviceready', 'offline', and 'online'.
     bindEvents: function() {
         document.addEventListener('deviceready', this.onDeviceReady, false);
+        document.addEventListener('load', this.onDeviceReady, false);
     },
     // deviceready Event Handler
     //
     // The scope of 'this' is the event. In order to call the 'receivedEvent'
     // function, we must explicitly call 'app.receivedEvent(...);'
     onDeviceReady: function() {
-        app.receivedEvent('deviceready');
+        app.listenerPhoto();
+
     },
-    // Update DOM on a Received Event
-    receivedEvent: function(id) {
-        var parentElement = document.getElementById(id);
-        var listeningElement = parentElement.querySelector('.listening');
-        var receivedElement = parentElement.querySelector('.received');
+    listenerPhoto: function() {
+        var button = document.getElementById('photo');
+        var image = document.getElementById('image');
 
-        listeningElement.setAttribute('style', 'display:none;');
-        receivedElement.setAttribute('style', 'display:block;');
+        var b64;
+        button.addEventListener('click', function(){
+            alert('ciao');
 
-        console.log('Received Event: ' + id);
+            function onSuccess(mediaFiles) {
+                var i, path, len;
+                for (i = 0, len = mediaFiles.length; i < len; i += 1) {
+                    path = mediaFiles[i].fullPath;
+                    // do something interesting with the file
+                    image.src = path;
+                }
+                //KO questo sotto serve per "pulire" la cache della fotocamera, altrimenti ogni volta che premi il tasto fai una foto ti apre una nuova istanza della fotocamera!
+                //KO navigator.camera.cleanup(onSuccess, onFail);
+            }
+
+            function onFail(message) {
+                alert('Failed because: ' + message);
+            }
+
+            //questa è la funzione per accedere alla fotocamera
+            navigator.device.capture.captureImage(onSuccess, onFail, {limit:1});
+
+        }, false);
+
+        image.addEventListener('click', function(){
+		//se l'immagine è diversa dal placehoder mandala al server
+            if(image.src != 'https://mozorg.cdn.mozilla.net/media/img/firefox/firefox-256.e2c1fc556816.jpg') {
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "foto.php", true);
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState == 4 && xhr.status == 200) {
+                        console.log(xhr.responseText);
+                    }
+                };
+                xhr.send(b64);
+            }
+        }, false);
     }
 };
 
