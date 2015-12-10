@@ -37,21 +37,33 @@ var app = {
         app.listenerPhoto();
 
     },
+
     listenerPhoto: function() {
         var button = document.getElementById('photo');
         var image = document.getElementById('image');
-
         var b64;
+
+        // FileReader API -> needed for Firefox
+        var reader = new FileReader();
+        reader.onloadend = function() {
+            image.src = reader.result;
+        };
+
         button.addEventListener('click', function(){
-            alert('ciao');
 
             function onSuccess(mediaFiles) {
-                var i, path, len;
-                for (i = 0, len = mediaFiles.length; i < len; i += 1) {
-                    path = mediaFiles[i].fullPath;
-                    // do something interesting with the file
+                var path = mediaFiles[0].fullPath;
+                if (path) {
                     image.src = path;
+                } else {
+                    // are we on Firefox?
+                    window.resolveLocalFileSystemURL(mediaFiles[0].localURL, function (fileEntry) {
+                        fileEntry.file(function (file) {
+                            reader.readAsDataURL(file);
+                        });
+                    });
                 }
+
                 //KO questo sotto serve per "pulire" la cache della fotocamera, altrimenti ogni volta che premi il tasto fai una foto ti apre una nuova istanza della fotocamera!
                 //KO navigator.camera.cleanup(onSuccess, onFail);
             }
